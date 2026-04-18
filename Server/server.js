@@ -17,7 +17,7 @@ import adminRoute from "./routes/adminRoute.js";
 const app = express();
 
 //! database
- connectDB();
+await connectDB();
 
 //! Webhooks
 app.post("/api/clerk", express.raw({ type: "application/json" }), clerkWebhook);
@@ -39,5 +39,9 @@ app.use("/api/orders", orderRoute);
 app.use("/api/addresses", addressRoute);
 app.use("/api/admin", adminRoute);
 
- makeAdmin();
-export default app;
+await makeAdmin();
+
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+  console.log(`Server is running at http://localhost:${port}`);
+});
