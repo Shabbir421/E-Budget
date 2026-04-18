@@ -17,7 +17,7 @@ import adminRoute from "./routes/adminRoute.js";
 const app = express();
 
 //! database
-await connectDB();
+ connectDB();
 
 //! Webhooks
 app.post("/api/clerk", express.raw({ type: "application/json" }), clerkWebhook);
@@ -39,5 +39,5 @@ app.use("/api/orders", orderRoute);
 app.use("/api/addresses", addressRoute);
 app.use("/api/admin", adminRoute);
 
-await makeAdmin();
+ makeAdmin();
 export default app;
