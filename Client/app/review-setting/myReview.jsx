@@ -1,40 +1,53 @@
 /** @format */
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
   FlatList,
   Image,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import Header from "@/components/Header";
+import axios from "axios";
+import { useAuth } from "@clerk/clerk-expo";
+import { COLORS } from "@/constants";
 
 export default function MyReview() {
-  const router = useRouter();
+  const { getToken } = useAuth();
 
-  // dummy reviews (replace with API later)
-  const reviews = [
-    {
-      id: "1",
-      productName: "Nike Air Max Shoes",
-      image: "https://i.imgur.com/1bX5QH6.jpg",
-      rating: 4,
-      comment: "Great quality and very comfortable!",
-    },
-    {
-      id: "2",
-      productName: "Apple Watch Series 9",
-      image: "https://i.imgur.com/2nCt3Sbl.jpg",
-      rating: 5,
-      comment: "Excellent product, worth the price.",
-    },
-  ];
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const renderStars = (rating: number) => {
+  const fetchReviews = async () => {
+    try {
+      const token = await getToken();
+
+      const { data } = await axios.get(
+        `${process.env.EXPO_PUBLIC_API_URL}/reviews/my`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      setReviews(data || []);
+    } catch (err) {
+      console.log(err?.response?.data || err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReviews();
+  }, []);
+
+  const renderStars = (rating) => {
     return (
       <View className="flex-row mt-1">
         {Array.from({ length: 5 }).map((_, index) => (
@@ -49,19 +62,26 @@ export default function MyReview() {
     );
   };
 
+  if (loading) {
+    return (
+      <SafeAreaView className="flex-1 justify-center items-center bg-white">
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
-   <Header  title="Reviews"  showBack  />
-      {/* LIST */}
-      {reviews.length === 0 ? (
+      <Header title="Reviews" showBack />
+
+      {reviews.length === 0 ?
         <View className="flex-1 items-center justify-center">
           <Ionicons name="star-outline" size={60} color="#ccc" />
           <Text className="text-gray-500 mt-2">No reviews yet</Text>
         </View>
-      ) : (
-        <FlatList
+      : <FlatList
           data={reviews}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item._id}
           contentContainerStyle={{ padding: 16 }}
           renderItem={({ item }) => (
             <View className="bg-gray-50 p-4 rounded-xl mb-4">
@@ -69,16 +89,15 @@ export default function MyReview() {
               {/* PRODUCT */}
               <View className="flex-row items-center">
                 <Image
-                  source={{ uri: item.image }}
+                  source={{ uri: item.product?.image }}
                   className="w-16 h-16 rounded-lg"
                 />
 
                 <View className="ml-3 flex-1">
                   <Text className="font-semibold" numberOfLines={1}>
-                    {item.productName}
+                    {item.product?.name}
                   </Text>
 
-                  {/* STARS */}
                   {renderStars(item.rating)}
                 </View>
               </View>
@@ -102,7 +121,7 @@ export default function MyReview() {
             </View>
           )}
         />
-      )}
+      }
     </SafeAreaView>
   );
 }

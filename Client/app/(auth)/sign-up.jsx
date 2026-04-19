@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   View,
   ActivityIndicator,
+  Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
@@ -14,7 +15,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter, Link } from "expo-router";
 import { useSignUp } from "@clerk/clerk-expo";
 import { COLORS } from "@/constants";
-import { Pressable } from "react-native";
 
 export default function SignUpScreen() {
   const { isLoaded, signUp, setActive } = useSignUp();
@@ -71,7 +71,7 @@ export default function SignUpScreen() {
         text1: "Verification sent",
         text2: "Check your email",
       });
-    } catch (err: any) {
+    } catch (err) {
       Toast.show({
         type: "error",
         text1: "Sign Up Failed",
@@ -114,7 +114,7 @@ export default function SignUpScreen() {
           text1: "Verification incomplete",
         });
       }
-    } catch (err: any) {
+    } catch (err) {
       Toast.show({
         type: "error",
         text1: "Invalid Code",
@@ -247,7 +247,7 @@ export default function SignUpScreen() {
             }
           </Pressable>
 
-          {/* RESEND BUTTON */}
+          {/* RESEND */}
           <Pressable
             onPress={async () => {
               if (loading) return;

@@ -1,10 +1,10 @@
 /** @format */
 
-import { View, Text, TouchableOpacity, Image } from "react-native";
 import React from "react";
-import { HeaderProps } from "@/assets/constants/types";
+import { View, Text, TouchableOpacity, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useCart } from "@/context/CartContext";
 
 export default function Header({
   title,
@@ -13,10 +13,10 @@ export default function Header({
   showCart,
   showMenu,
   showLogo,
-}: HeaderProps) {
+}) {
   const router = useRouter();
 
-  const { itemCount } = { itemCount: 3 };
+  const { itemCount } = useCart();
 
   return (
     <View className="flex-row items-center justify-between px-4 py-3 bg-white relative">
@@ -37,7 +37,7 @@ export default function Header({
         )}
       </View>
 
-      {/* CENTER (ALWAYS FIXED CENTER) */}
+      {/* CENTER */}
       <View className="absolute left-0 right-0 items-center justify-center">
         {showLogo ?
           <Image
@@ -64,7 +64,7 @@ export default function Header({
               <Ionicons name="bag-outline" size={22} color="black" />
 
               <View className="absolute -top-1 -right-1 bg-red-500 rounded-full w-4 h-4 items-center justify-center">
-                <Text className="text-white text-xs font-bold">
+                <Text className="text-green-700 text-xs font-bold">
                   {itemCount}
                 </Text>
               </View>

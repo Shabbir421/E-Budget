@@ -1,6 +1,6 @@
 /** @format */
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -8,21 +8,47 @@ import {
   ScrollView,
   Alert,
   Image,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import Header from "@/components/Header";
+import axios from "axios";
+import { useAuth, useUser } from "@clerk/clerk-expo";
 
 export default function Setting() {
   const router = useRouter();
+  const { getToken } = useAuth();
+  const { user } = useUser();
 
-  // dummy user (replace with real auth)
-  const user = {
-    name: "John Doe",
-    email: "johndoe@gmail.com",
-    image: "https://i.pravatar.cc/150?img=12",
+  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState(null);
+
+  const fetchUser = async () => {
+    try {
+      const token = await getToken();
+
+      const { data } = await axios.get(
+        `${process.env.EXPO_PUBLIC_API_URL}/user/me`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      setProfile(data);
+    } catch (err) {
+      console.log(err?.response?.data || err.message);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    fetchUser();
+  }, []);
 
   const handleLogout = () => {
     Alert.alert("Logout", "Are you sure you want to logout?", [
@@ -52,32 +78,53 @@ export default function Setting() {
     { title: "Privacy Policy", icon: "lock-closed-outline" },
   ];
 
+  if (loading) {
+    return (
+      <SafeAreaView className="flex-1 justify-center items-center bg-surface">
+        <ActivityIndicator size="large" color="#000" />
+      </SafeAreaView>
+    );
+  }
+
   return (
-      <SafeAreaView className="flex-1 bg-surface" edges={["top"]}>
-        <Header  title="Setting"  showBack  />
+    <SafeAreaView className="flex-1 bg-surface" edges={["top"]}>
+      <Header title="Setting" showBack />
+
       <ScrollView className="flex-1 px-4">
-        {/* HEADER PROFILE */}
+
+        {/* PROFILE */}
         <View className="items-center mt-6 mb-6">
           <Image
-            source={{ uri: user.image }}
+            source={{
+              uri:
+                profile?.image ||
+                user?.imageUrl ||
+                "https://i.pravatar.cc/150",
+            }}
             className="w-24 h-24 rounded-full"
           />
 
-          <Text className="text-xl font-bold mt-3">{user.name}</Text>
-          <Text className="text-gray-500">{user.email}</Text>
+          <Text className="text-xl font-bold mt-3">
+            {profile?.name || user?.fullName || "User"}
+          </Text>
+
+          <Text className="text-gray-500">
+            {profile?.email || user?.primaryEmailAddress?.emailAddress}
+          </Text>
         </View>
 
-        {/* ACCOUNT SECTION */}
+        {/* ACCOUNT */}
         <Text className="text-gray-500 font-semibold mb-2">ACCOUNT</Text>
 
         <View className="bg-gray-50 rounded-xl p-2 mb-6">
           {menuItems.map((item, index) => (
             <TouchableOpacity
               key={index}
-              onPress={() => router.push(item.route as any)}
+              onPress={() => router.push(item.route)}
               className="flex-row items-center justify-between py-4 px-2 border-b border-gray-200 last:border-0">
+
               <View className="flex-row items-center">
-                <Ionicons name={item.icon as any} size={22} color="black" />
+                <Ionicons name={item.icon} size={22} color="black" />
                 <Text className="ml-4 text-base">{item.title}</Text>
               </View>
 
@@ -86,7 +133,7 @@ export default function Setting() {
           ))}
         </View>
 
-        {/* SUPPORT SECTION */}
+        {/* SUPPORT */}
         <Text className="text-gray-500 font-semibold mb-2">SUPPORT</Text>
 
         <View className="bg-gray-50 rounded-xl p-2 mb-6">
@@ -94,8 +141,9 @@ export default function Setting() {
             <TouchableOpacity
               key={index}
               className="flex-row items-center justify-between py-4 px-2 border-b border-gray-200 last:border-0">
+
               <View className="flex-row items-center">
-                <Ionicons name={item.icon as any} size={22} color="black" />
+                <Ionicons name={item.icon} size={22} color="black" />
                 <Text className="ml-4 text-base">{item.title}</Text>
               </View>
 
@@ -108,8 +156,11 @@ export default function Setting() {
         <TouchableOpacity
           onPress={handleLogout}
           className="bg-red-500 py-3 rounded-full mb-10">
-          <Text className="text-white text-center font-bold">Logout</Text>
+          <Text className="text-white text-center font-bold">
+            Logout
+          </Text>
         </TouchableOpacity>
+
       </ScrollView>
     </SafeAreaView>
   );

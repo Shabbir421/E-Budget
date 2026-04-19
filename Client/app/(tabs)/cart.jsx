@@ -1,107 +1,62 @@
 /** @format */
 
 import { View, Text, FlatList, TouchableOpacity, Image } from "react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-// 🧪 Dummy Data
-// 🧪 Dummy Data (FIXED + UNIQUE ITEMS)
-const DUMMY_CART = [
-  {
-    _id: "1",
-    name: "Nike Air Max 270",
-    price: 4999,
-    quantity: 1,
-    images: ["https://images.unsplash.com/photo-1606813907291-d86efa9b94db"],
-  },
-  {
-    _id: "2",
-    name: "Apple Watch Series 9",
-    price: 29999,
-    quantity: 2,
-    images: ["https://images.unsplash.com/photo-1511707171634-5f897ff02aa9"],
-  },
-  {
-    _id: "3",
-    name: "Samsung Galaxy Buds 2",
-    price: 9999,
-    quantity: 1,
-    images: ["https://images.unsplash.com/photo-1585386959984-a41552231693"],
-  },
-  {
-    _id: "4",
-    name: "Adidas Running Shoes",
-    price: 3599,
-    quantity: 1,
-    images: ["https://images.unsplash.com/photo-1542291026-7eec264c27ff"],
-  },
-  {
-    _id: "5",
-    name: "Boat Bluetooth Speaker",
-    price: 2499,
-    quantity: 3,
-    images: ["https://images.unsplash.com/photo-1589003077984-894e133dabab"],
-  },
-  {
-    _id: "6",
-    name: "Canon DSLR Camera",
-    price: 55999,
-    quantity: 1,
-    images: ["https://images.unsplash.com/photo-1516035069371-29a1b244cc32"],
-  },
-  {
-    _id: "7",
-    name: "Canon DSLR Camera",
-    price: 55999,
-    quantity: 1,
-    images: ["https://images.unsplash.com/photo-1516035069371-29a1b244cc32"],
-  },
-  {
-    _id: "7",
-    name: "Canon DSLR Camera",
-    price: 55999,
-    quantity: 1,
-    images: ["https://images.unsplash.com/photo-1516035069371-29a1b244cc32"],
-  },
-  {
-    _id: "7",
-    name: "Canon DSLR Camera",
-    price: 55999,
-    quantity: 1,
-    images: ["https://images.unsplash.com/photo-1516035069371-29a1b244cc32"],
-  },
-  {
-    _id: "7",
-    name: "Canon DSLR Camera",
-    price: 55999,
-    quantity: 1,
-    images: ["https://images.unsplash.com/photo-1516035069371-29a1b244cc32"],
-  },
-];
+import { api } from "@/constants/api";
+import Toast from "react-native-toast-message";
+import { COLORS } from "@/constants";
 
 export default function Cart() {
   const router = useRouter();
-  const [cartItems, setCartItems] = useState(DUMMY_CART);
+  const [cartItems, setCartItems] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // 💰 Total
+  // 📥 FETCH CART
+  const fetchCart = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get("/cart");
+      setCartItems(res.data?.cart || res.data || []);
+    } catch (err) {
+      console.log("Cart Fetch Error:", err?.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCart();
+  }, []);
+
+  // 💰 TOTAL
   const cartTotal = cartItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0,
   );
 
-  // ➕ Increase
-  const increaseQty = (id: string) => {
+  // ➕ INCREASE
+  const increaseQty = async (id) => {
     setCartItems((prev) =>
       prev.map((item) =>
         item._id === id ? { ...item, quantity: item.quantity + 1 } : item,
       ),
     );
+
+    try {
+      await api.patch("/cart/update", {
+        productId: id,
+        action: "increase",
+      });
+    } catch (err) {
+      console.log(err?.message);
+    }
   };
 
-  // ➖ Decrease
-  const decreaseQty = (id: string) => {
+  // ➖ DECREASE
+  const decreaseQty = async (id) => {
     setCartItems((prev) =>
       prev.map((item) =>
         item._id === id && item.quantity > 1 ?
@@ -109,12 +64,32 @@ export default function Cart() {
         : item,
       ),
     );
+
+    try {
+      await api.patch("/cart/update", {
+        productId: id,
+        action: "decrease",
+      });
+    } catch (err) {
+      console.log(err?.message);
+    }
   };
 
-  // ❌ Remove
-  const removeItem = (id: string) => {
+  // ❌ REMOVE
+  const removeItem = async (id) => {
     setCartItems((prev) => prev.filter((item) => item._id !== id));
+
+    try {
+      await api.delete(`/cart/${id}`);
+    } catch (err) {
+      console.log(err?.message);
+    }
   };
+  Toast.show({
+    type: "success",
+    text1: "Success",
+    text2: "Product deleted successfully",
+  });
 
   const isEmpty = cartItems.length === 0;
 
@@ -131,8 +106,13 @@ export default function Cart() {
         <View style={{ width: 22 }} />
       </View>
 
-      {/* 📦 EMPTY STATE */}
-      {isEmpty ?
+      {/* LOADING */}
+      {loading ?
+        <View className="flex-1 justify-center items-center">
+          <Text>Loading...</Text>
+        </View>
+      : isEmpty ?
+        /* 📦 EMPTY STATE */
         <View className="flex-1 justify-center items-center px-6">
           <Ionicons name="cart-outline" size={90} color="#ccc" />
 
@@ -151,7 +131,7 @@ export default function Cart() {
           </TouchableOpacity>
         </View>
       : <>
-          {/* 📦 CART LIST */}
+          {/* CART LIST */}
           <FlatList
             data={cartItems}
             keyExtractor={(item) => item._id}
@@ -161,14 +141,12 @@ export default function Cart() {
             }}
             renderItem={({ item }) => (
               <View className="flex-row  items-center bg-gray-50 p-3 rounded-xl mb-3">
-                {/* IMAGE */}
                 <Image
                   source={{ uri: item.images[0] }}
                   className="w-20 h-20 rounded-lg"
                   resizeMode="cover"
                 />
 
-                {/* INFO */}
                 <View className="flex-1 ml-3">
                   <Text className="font-semibold" numberOfLines={1}>
                     {item.name}
@@ -176,7 +154,6 @@ export default function Cart() {
 
                   <Text className="text-gray-600 mt-1">₹{item.price}</Text>
 
-                  {/* QTY */}
                   <View className="flex-row items-center mt-2">
                     <TouchableOpacity
                       onPress={() => decreaseQty(item._id)}
@@ -194,7 +171,6 @@ export default function Cart() {
                   </View>
                 </View>
 
-                {/* DELETE */}
                 <TouchableOpacity onPress={() => removeItem(item._id)}>
                   <Ionicons name="trash-outline" size={20} color="red" />
                 </TouchableOpacity>
@@ -203,21 +179,17 @@ export default function Cart() {
           />
 
           {/* 💰 BOTTOM BAR */}
-          {/* 💰 BOTTOM BAR (FIXED) */}
-          <View className="absolute pb-20   bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4">
-            {/* Subtotal */}
+          <View className="absolute pb-20 bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4">
             <View className="flex-row justify-between mb-1">
               <Text className="text-gray-600">Subtotal </Text>
               <Text className="font-semibold">₹{cartTotal}</Text>
             </View>
 
-            {/* Shipping */}
             <View className="flex-row justify-between mb-1">
               <Text className="text-gray-600">Shipping </Text>
               <Text className="font-semibold text-green-600">FREE</Text>
             </View>
 
-            {/* Total */}
             <View className="flex-row justify-between mb-3">
               <Text className="text-lg font-bold">Total</Text>
               <Text className="text-lg font-bold">₹{cartTotal}</Text>

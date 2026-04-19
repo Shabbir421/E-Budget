@@ -8,36 +8,37 @@ import {
   updateProduct,
   deleteProduct,
 } from "../controllers/productController.js";
+
 import upload from "../configs/multer.js";
 import { authorize, protect } from "../middleware/auth.js";
 
 const ProductRoute = express.Router();
 
-//get all products
+// GET all products
 ProductRoute.get("/", getProducts);
 
-//get single product
+// GET single product
 ProductRoute.get("/:id", getSingleProduct);
 
-//add new product admin only
+// CREATE product (admin only)
 ProductRoute.post(
   "/",
-  upload.array("images", 5),
   protect,
   authorize("admin"),
-  createProduct,
+  upload.array("images", 5),
+  createProduct
 );
 
-// updateProduct admin only
+// UPDATE product (admin only)
 ProductRoute.put(
   "/:id",
-  upload.array("images", 5),
   protect,
   authorize("admin"),
-  updateProduct,
+  upload.array("images", 5),
+  updateProduct
 );
 
-//delete product admin only
+// DELETE product (admin only)
 ProductRoute.delete("/:id", protect, authorize("admin"), deleteProduct);
 
 export default ProductRoute;

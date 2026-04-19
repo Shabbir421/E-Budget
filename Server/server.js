@@ -13,6 +13,9 @@ import orderRoute from "./routes/ordersRoute.js";
 import cloudinary from "./configs/cloudinary.js";
 import addressRoute from "./routes/addressRout.js";
 import adminRoute from "./routes/adminRoute.js";
+import { seedProducts } from "./scripts/seedProducts.js";
+import dotenv from "dotenv";
+dotenv.config();
 
 const app = express();
 
@@ -40,6 +43,9 @@ app.use("/api/addresses", addressRoute);
 app.use("/api/admin", adminRoute);
 
 await makeAdmin();
+
+//seed dummy products
+await seedProducts(process.env.MONGODB_URI);
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {

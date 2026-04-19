@@ -11,9 +11,9 @@ import {
 import React, { useEffect, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { dummyProducts } from "@/assets/assets";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useWishlist } from "@/context/WishlistContext"; // ✅ ADDED
+import axios from "axios";
+import { useWishlist } from "@/context/WishlistContext";
 
 const { width } = Dimensions.get("window");
 
@@ -21,15 +21,13 @@ export default function ProductDetails() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
 
-  // ✅ WISHLIST CONTEXT ADDED
   const { toggleWishlist, isInWishlist } = useWishlist();
 
-  const [product, setProduct] = useState<any>(null);
+  const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedSize, setSelectedSize] = useState("");
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
-  // ✅ Safe Back Function
   const handleBack = () => {
     if (router.canGoBack()) {
       router.back();
@@ -38,14 +36,25 @@ export default function ProductDetails() {
     }
   };
 
-  // ✅ Fetch product
+  // ✅ BACKEND FETCH (replaces dummyProducts)
   useEffect(() => {
-    const foundProduct = dummyProducts.find(
-      (item) => item._id === id || item.id === id,
-    );
+    const fetchProduct = async () => {
+      try {
+        const { data } = await axios.get(`/products/${id}`);
+        setProduct(data);
+      } catch (err) {
+        Toast.show({
+          type: "error",
+          text1: "Error",
+          text2: "Failed to fetch product",
+        })
+        console.log(err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    setProduct(foundProduct || null);
-    setLoading(false);
+    fetchProduct();
   }, [id]);
 
   if (loading) {
@@ -60,7 +69,7 @@ export default function ProductDetails() {
     <SafeAreaView className="flex-1" edges={["top"]}>
       <View className="flex-1 bg-white">
         <ScrollView showsVerticalScrollIndicator={false}>
-          {/* 🖼 IMAGE SECTION */}
+          {/* IMAGE SECTION */}
           <View className="relative">
             <ScrollView
               horizontal
@@ -73,7 +82,7 @@ export default function ProductDetails() {
                 );
                 setActiveImageIndex(slide);
               }}>
-              {product.images.map((img: string, index: number) => (
+              {product.images.map((img, index) => (
                 <Image
                   key={index}
                   source={{ uri: img }}
@@ -83,7 +92,7 @@ export default function ProductDetails() {
               ))}
             </ScrollView>
 
-            {/* 🔙 ICONS */}
+            {/* ICONS */}
             <View className="absolute top-3 left-4 right-4 flex-row justify-between items-center z-10">
               <TouchableOpacity
                 onPress={handleBack}
@@ -91,7 +100,6 @@ export default function ProductDetails() {
                 <Ionicons name="arrow-back" size={20} color="black" />
               </TouchableOpacity>
 
-              {/* ❤️ WISHLIST FIX */}
               <TouchableOpacity
                 onPress={() => toggleWishlist(product)}
                 className="w-10 h-10 rounded-full bg-white/80 justify-center items-center">
@@ -104,9 +112,9 @@ export default function ProductDetails() {
             </View>
           </View>
 
-          {/* 🔘 DOTS */}
+          {/* DOTS */}
           <View className="flex-row justify-center mt-2">
-            {product.images.map((_: any, index: number) => (
+            {product.images.map((_, index) => (
               <View
                 key={index}
                 className={`h-2 mx-1 rounded-full ${
@@ -118,7 +126,7 @@ export default function ProductDetails() {
             ))}
           </View>
 
-          {/* 📦 PRODUCT INFO */}
+          {/* PRODUCT INFO */}
           <View className="px-4 mt-4">
             {/* NAME + RATING */}
             <View className="flex-row justify-between items-center">
@@ -135,8 +143,8 @@ export default function ProductDetails() {
                   {product.rating ?? 4.5}
                 </Text>
 
-                <Text className="ml-1  text-gray-700 text-sm">
-                  {`(${Number(product.reviewsCount ?? 120).toFixed(0)})`}{" "}
+                <Text className="ml-1 text-gray-700 text-sm">
+                  ({Number(product.reviewsCount ?? 120).toFixed(0)})
                 </Text>
               </View>
             </View>
@@ -152,7 +160,7 @@ export default function ProductDetails() {
                 <Text className="font-bold text-lg mb-2">Size</Text>
 
                 <View className="flex-row flex-wrap gap-2">
-                  {product.sizes.map((size: string, index: number) => (
+                  {product.sizes.map((size, index) => (
                     <TouchableOpacity
                       key={index}
                       onPress={() => setSelectedSize(size)}
@@ -181,7 +189,7 @@ export default function ProductDetails() {
           </View>
         </ScrollView>
 
-        {/* 🛒 BOTTOM BAR */}
+        {/* BOTTOM BAR */}
         <View className="flex-row items-center px-4 py-5 bg-white shadow-lg">
           <TouchableOpacity className="flex-1 bg-black py-3 rounded-full">
             <View className="flex-row items-center justify-center gap-2">

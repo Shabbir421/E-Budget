@@ -2,10 +2,9 @@
 
 import { COLORS } from "@/constants";
 import { useSignIn } from "@clerk/clerk-expo";
-import type { EmailCodeFactor } from "@clerk/types";
 import { Ionicons } from "@expo/vector-icons";
 import { Link, useRouter } from "expo-router";
-import * as React from "react";
+import React from "react";
 import {
   TextInput,
   View,
@@ -13,9 +12,13 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Alert,
+  Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Pressable } from "react-native";
+import Toast from "react-native-toast-message";
+
+// Optional: axios (only if you later call backend APIs manually)
+import axios from "axios";
 
 export default function Page() {
   const { signIn, setActive, isLoaded } = useSignIn();
@@ -44,19 +47,20 @@ export default function Page() {
         password,
       });
 
-      // ✅ SUCCESS LOGIN
+      // ✅ SUCCESS
       if (signInAttempt.status === "complete") {
         await setActive({
           session: signInAttempt.createdSessionId,
         });
+
+
         router.replace("/");
       }
 
-      // 🔐 EMAIL CODE (MFA)
+      // 🔐 MFA EMAIL CODE
       else if (signInAttempt.status === "needs_second_factor") {
         const emailCodeFactor = signInAttempt.supportedSecondFactors?.find(
-          (factor): factor is EmailCodeFactor =>
-            factor.strategy === "email_code",
+          (factor) => factor.strategy === "email_code",
         );
 
         if (emailCodeFactor) {
@@ -70,7 +74,7 @@ export default function Page() {
       } else {
         Alert.alert("Error", "Something went wrong");
       }
-    } catch (err: any) {
+    } catch (err) {
       console.log(err);
       Alert.alert("Login Failed", err?.errors?.[0]?.message || "Try again");
     } finally {
@@ -97,12 +101,17 @@ export default function Page() {
         await setActive({
           session: attempt.createdSessionId,
         });
+        Toast.show({
+          type: "success",
+          text1: "Success",
+          text2: "Login successful",
+        });
 
         router.replace("/");
       } else {
         Alert.alert("Error", "Invalid code");
       }
-    } catch (err: any) {
+    } catch (err) {
       console.log(err);
       Alert.alert("Verification Failed", "Invalid or expired code");
     } finally {
@@ -114,7 +123,7 @@ export default function Page() {
     <SafeAreaView className="flex-1 bg-white justify-center px-6">
       {!showEmailCode ?
         <>
-          {/* BACK BUTTON */}
+          {/* BACK */}
           <TouchableOpacity
             onPress={() => router.push("/")}
             className="absolute top-12 left-6 z-10">
@@ -126,7 +135,7 @@ export default function Page() {
             <Text className="text-3xl font-bold text-primary mb-2 text-center">
               Welcome Back
             </Text>
-            <Text className="text-base text-gray-600 text-center w-full">
+            <Text className="text-base text-gray-600 text-center">
               Sign in to continue
             </Text>
           </View>
@@ -167,10 +176,7 @@ export default function Page() {
             disabled={loading || !emailAddress || !password}>
             {loading ?
               <ActivityIndicator color="#fff" />
-            : <Text className="text-white font-semibold text-lg tracking-wide">
-                Sign In
-              </Text>
-            }
+            : <Text className="text-white font-semibold text-lg">Sign In</Text>}
           </Pressable>
 
           {/* FOOTER */}
@@ -182,7 +188,7 @@ export default function Page() {
           </View>
         </>
       : <>
-          {/* VERIFY UI */}
+          {/* VERIFY */}
           <View className="items-center mb-10">
             <Text className="text-3xl font-bold text-primary mb-2">
               Verify Email
@@ -204,15 +210,12 @@ export default function Page() {
           <Pressable
             onPress={onVerifyPress}
             disabled={loading}
-            className={`w-full py-2 rounded-2xl items-center justify-center shadow-md ${
+            className={`w-full py-4 rounded-2xl items-center justify-center shadow-md ${
               loading ? "bg-gray-300" : "bg-black active:bg-black"
             }`}>
             {loading ?
               <ActivityIndicator color="#fff" />
-            : <Text className="text-white font-semibold text-lg tracking-wide">
-                Verify
-              </Text>
-            }
+            : <Text className="text-white font-semibold text-lg">Verify</Text>}
           </Pressable>
         </>
       }

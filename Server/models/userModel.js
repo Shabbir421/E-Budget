@@ -23,14 +23,12 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
     },
 
-    images: {
-      type: [
-        {
-          url: String,
-          public_id: String,
-        },
-      ],
-    },
+    images: [
+      {
+        url: String,
+        public_id: String,
+      },
+    ],
 
     role: {
       type: String,

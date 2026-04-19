@@ -1,21 +1,14 @@
 /** @format */
 
-import { Product, WishlistContextType } from "@/assets/constants/types";
 import React, { createContext, useContext, useState, useMemo } from "react";
 
-const WishlistContext = createContext<WishlistContextType | undefined>(
-  undefined,
-);
+const WishlistContext = createContext(undefined);
 
-export const WishlistProvider = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
-  const [wishlist, setWishlist] = useState<Product[]>([]);
+export const WishlistProvider = ({ children }) => {
+  const [wishlist, setWishlist] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const addToWishlist = (product: Product) => {
+  const addToWishlist = (product) => {
     setWishlist((prev) => {
       const exists = prev.some((item) => item._id === product._id);
       if (exists) return prev;
@@ -23,15 +16,15 @@ export const WishlistProvider = ({
     });
   };
 
-  const removeFromWishlist = (id: string) => {
+  const removeFromWishlist = (id) => {
     setWishlist((prev) => prev.filter((item) => item._id !== id));
   };
 
-  const isInWishlist = (id: string) => {
+  const isInWishlist = (id) => {
     return wishlist.some((item) => item._id === id);
   };
 
-  const toggleWishlist = (product: Product) => {
+  const toggleWishlist = (product) => {
     if (isInWishlist(product._id)) {
       removeFromWishlist(product._id);
     } else {

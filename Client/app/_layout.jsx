@@ -25,7 +25,7 @@ export default function RootLayout() {
         <CartProvider>
           <WishlistProvider>
             <Stack screenOptions={{ headerShown: false }} />
-            <Toast />
+            <Toast position="top" />
           </WishlistProvider>
         </CartProvider>
       </ClerkProvider>

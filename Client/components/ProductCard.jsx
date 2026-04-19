@@ -4,10 +4,9 @@ import { View, Text, Image, TouchableOpacity } from "react-native";
 import React from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Link } from "expo-router";
-import { ProductCardProps } from "@/assets/constants/types";
 import { useWishlist } from "@/context/WishlistContext";
 
-export default function ProductCard({ product }: ProductCardProps) {
+export default function ProductCard({ product }) {
   const { toggleWishlist, isInWishlist } = useWishlist();
 
   const isFav = isInWishlist(product._id);
@@ -16,7 +15,8 @@ export default function ProductCard({ product }: ProductCardProps) {
     <Link href={`/product/${product._id}`} asChild>
       <TouchableOpacity
         className="w-[48%] bg-white rounded-xl p-1 mb-4"
-        activeOpacity={0.8}>
+        activeOpacity={0.8}
+      >
         {/* Image */}
         <View className="relative">
           <Image
@@ -31,7 +31,8 @@ export default function ProductCard({ product }: ProductCardProps) {
               e.stopPropagation();
               toggleWishlist(product);
             }}
-            className="absolute top-2 right-2 bg-white p-1 rounded-full">
+            className="absolute top-2 right-2 bg-white p-1 rounded-full"
+          >
             <Ionicons
               name={isFav ? "heart" : "heart-outline"}
               size={18}
@@ -54,7 +55,9 @@ export default function ProductCard({ product }: ProductCardProps) {
         </Text>
 
         {/* Price */}
-        <Text className="text-primary font-bold mt-1">₹{product.price}</Text>
+        <Text className="text-primary font-bold mt-1">
+          ₹{product.price}
+        </Text>
       </TouchableOpacity>
     </Link>
   );
